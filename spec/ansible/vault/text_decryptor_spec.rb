@@ -13,7 +13,7 @@ module Ansible
         end
 
         it 'must return the plaintext' do
-          content = Vault.decrypt(text: plaintext, password: 'ansible')
+          content = TextDecryptor.decrypt(text: plaintext, password: 'ansible')
           expect(content).to eq plaintext
         end
       end

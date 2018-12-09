@@ -4,6 +4,7 @@ require 'ansible/vault/bin_ascii'
 require 'ansible/vault/encryptor'
 require 'ansible/vault/decryptor'
 require 'ansible/vault/text_decryptor'
+require 'ansible/vault/key_value_decryptor'
 require 'ansible/vault/file_reader'
 require 'ansible/vault/file_writer'
 require 'ansible/vault/version'
@@ -13,6 +14,8 @@ module Ansible
   class Vault
     # The standard header for Ansible's current vault format
     FILE_HEADER = "$ANSIBLE_VAULT;1.1;AES256".freeze
+    # YAML_KEY_VALUE_REGEX is used to guess whether a file is a YAML or not
+    YAML_KEY_VALUE_REGEX = /^(\w+): !vault \|$/.freeze
 
     # Indicate if the text at the supplied path appeard to be encrypted by
     # Ansible Vault
@@ -20,7 +23,12 @@ module Ansible
     # @param text [String] The encrypted text
     # @param password [String] The password for the text
     def self.decrypt(text:, password:)
-      TextDecryptor.decrypt(text: text, password: password)
+      matches = YAML_KEY_VALUE_REGEX.match(text)
+      if matches && !matches.empty?
+        KeyValueDecryptor.decrypt(text: text, password: password)
+      else
+        TextDecryptor.decrypt(text: text, password: password)
+      end
     end
 
     # Indicate if the file at the supplied path appeard to be encrypted by
